@@ -1,6 +1,7 @@
 /* File: utils.c */
 //--- LIBRERIAS ---
 #include "utils.h"
+#include "fecha.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
@@ -158,6 +159,23 @@ void cleanBuffer(){
 		return 0;
 	}
 	
+	int calcularEdad (const char *fechaNac) {
+		int dA, mA, yA;
+		int dN, mN, yN;
+		
+		sscanf(fechaActual, "%d-%d-%d", &dA, &mA, &yA);
+		sscanf(fechaNac, "%d-%d-%d", &dN, &mN, &yN);
+		
+		int edad = yA - yN;
+		
+		/* si aún no ha cumplido años este año, restar 1 */
+		if (mA < mN || (mA == mN && dA < dN)) {
+			edad--;
+		}
+		
+		return edad;
+	}
+	
 	// --- Funciones de UI ---
 	
 	void limpiarPantalla() {
@@ -178,6 +196,14 @@ void cleanBuffer(){
 		printf("\n"); 
 	}
 	
+	void imprimirLineaFecha(char caracter) {
+		for (int i = 0; i < (ANCHO_CONSOLA-12); i++) {
+			printf("%c", caracter);
+		}
+		printf(" %s ",fechaActual);
+		printf("\n"); 
+	}
+	
 	void imprimirCentrado(const char *texto) {
 		int largo = strlen(texto); 
 		int espacios = (ANCHO_CONSOLA - largo) / 2; 
@@ -193,7 +219,7 @@ void cleanBuffer(){
 		limpiarPantalla(); 
 		printf("\n"); 
 		
-		imprimirLinea('='); 
+		imprimirLineaFecha('='); 
 		imprimirCentrado("SISTEMA DE GESTIÓN DE CITAS MÉDICAS");
 		imprimirLinea('=');
 		

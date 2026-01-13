@@ -14,6 +14,7 @@ int esHoraValida(const char *h);    // Valida horas sueltas HH:MM
 int validarFechaNacimiento(const char *fecha); // Rango 1900-2025
 int validarFechaCita(const char *fecha);       // Rango 2024-2100
 int validacionEdad(char *buffer);
+int calcularEdad (const char *fechaNac);
 
 
 // Prototipos de UI

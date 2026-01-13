@@ -2,6 +2,7 @@
 //--- LIBRERIAS ---
 #include "autenticacion.h"
 #include "utils.h"
+#include "fecha.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -116,10 +117,10 @@ static void registrarUsuario(void) {
 		else printf("   -> Error: Solo letras y espacios.\n");
 		} while(1);
 		
-		do { printf("   Edad: "); fgets(buffer, 100, stdin); buffer[strcspn(buffer,"\n")]='\0';
+		/*do { printf("   Edad: "); fgets(buffer, 100, stdin); buffer[strcspn(buffer,"\n")]='\0';
 		if(validacionEdad(buffer)) { edad = atoi(buffer); break; }
 		else printf("   -> Error: Ingrese una edad valida (1-120).\n");
-		} while(1);
+		} while(1);*/
 		
 		// --- VALIDAR NACIEMIENTO ---
 		do
@@ -136,6 +137,8 @@ static void registrarUsuario(void) {
 				printf("   -> Error: Formato invalido (DD-MM-YYYY) o fecha imposible.\n");
 			}
 		} while(1);
+	
+		edad = calcularEdad(fechaNac);
 		
 		do { printf("   Telefono (10 digitos): "); fgets(buffer, 100, stdin); buffer[strcspn(buffer,"\n")]='\0';
 		if (!esSoloNumeros(buffer)) printf("   -> Error: Solo numeros.\n");
@@ -163,10 +166,10 @@ static void registrarUsuario(void) {
 		else printf("   -> Error: Solo letras y espacios.\n");
 		} while(1);
 		
-		do { printf("   Edad: "); fgets(buffer, 100, stdin); buffer[strcspn(buffer,"\n")]='\0';
+		/*do { printf("   Edad: "); fgets(buffer, 100, stdin); buffer[strcspn(buffer,"\n")]='\0';
 		if(validacionEdad(buffer)) { edad = atoi(buffer); break; }
 		else printf("   -> Error: Ingrese una edad valida (1-120).\n");
-		} while(1);
+		} while(1);*/
 		
 		// --- CAMBIO AQUI: Validar Nacimiento ---
 		do { 
@@ -179,6 +182,8 @@ static void registrarUsuario(void) {
 				printf("   -> Error: Formato invalido (DD-MM-YYYY) o fecha imposible.\n");
 			}
 		} while(1);
+		
+		edad = calcularEdad(fechaNac);
 		
 		int opEsp;
 		printf("\n   Seleccione Especialidad:\n"); 
@@ -241,16 +246,21 @@ static int iniciarSesion(char *usuarioLogueadoBuffer)
 		// 2. VERIFICACIÓN DE USUARIOS NORMALES
 		FILE *archivo = fopen(fileAuth, "r");
 		int loginExitoso = 0, rolDetectado = 0;
+		int usuarioEncontrado = 0;
 		
 		if (archivo) {
 			while (fgets(linea, sizeof(linea), archivo)) {
 				if (sscanf(linea, "%19[^|]|%19[^|]|%d", uLeido, pLeido, &rLeido) == 3) {
-					if (strcmp(usuarioIngresado, uLeido) == 0 && strcmp(passwordIngresado, pLeido) == 0) {
-						loginExitoso = 1; 
-						rolDetectado = rLeido;
-						strcpy(usuarioLogueadoBuffer, uLeido);
-						break;
+					if (strcmp(usuarioIngresado, uLeido) == 0) {
+						usuarioEncontrado = 1;
+						if (strcmp(passwordIngresado, pLeido) == 0) {
+							loginExitoso = 1;
+							rolDetectado = rLeido;
+							strcpy(usuarioLogueadoBuffer, uLeido);
+							break;
+						}
 					}
+					
 				}
 			}
 			fclose(archivo);
@@ -259,8 +269,24 @@ static int iniciarSesion(char *usuarioLogueadoBuffer)
 		if (loginExitoso) {
 			printf("\n   [OK] Bienvenido!\n"); pausa();
 			return rolDetectado;
-		} else {
-			printf("\n   [!] Credenciales incorrectas.\n"); intentos--; pausa();
+		} else if (!usuarioEncontrado) {
+			printf("\n   [!] Usuario no encontrado.\n");
+			printf("   Desea crear una nueva cuenta? (s/n): ");
+			
+			char opcion[5];
+			fgets(opcion, sizeof(opcion), stdin);
+			opcion[strcspn(opcion, "\n")] = '\0';
+			
+			if (strcmp(opcion, "s") == 0 || strcmp(opcion, "S") == 0) {
+				registrarUsuario();
+				return 0; // volver
+			}
+			
+			pausa();
+		}else{
+			printf("\n   [!] Contraseña incorrecta.\n");
+			intentos--;
+			pausa();
 		}
 	}
 	return 0;
@@ -276,7 +302,7 @@ int sistemaAutenticacion(char *usuarioLogueadoBuffer)
 	{
 		dibujarEncabezado("BIENVENIDO AL SISTEMA MÉDICO");
 		printf("\n   [1] Iniciar Sesión");
-		printf("\n   [2] Registrarse (Nuevo Usuario)");
+		//printf("\n   [2] Registrarse (Nuevo Usuario)");
 		printf("\n   [0] Salir");
 		printf("\n\n   Opción: ");
 		

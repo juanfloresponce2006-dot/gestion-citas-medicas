@@ -6,6 +6,7 @@
 #include "historial.h"
 #include "utils.h"
 #include "autenticacion.h" 
+#include "fecha.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,8 @@ void menuPacienteLogueado(char *cedulaPaciente);
 
 int main()
 {
+	getFechaActual();
+	
 	SetConsoleOutputCP(1252); 
 	SetConsoleCP(1252);
 	system("mode con cols=120 lines=50");

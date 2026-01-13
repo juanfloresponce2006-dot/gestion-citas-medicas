@@ -133,7 +133,7 @@ void gestionarHistorial(const char *codigoMedicoLogueado) {
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strcspn(buffer, "\n")] = '\0';
 	
-	if (strcmp(buffer, "si") == 0 || strcmp(buffer, "SI") == 0) {
+	if (strcmp(buffer, "si") == 0 || strcmp(buffer, "SI") == 0 || strcmp(buffer, "s") == 0) {
 		Historial nueva;
 		nueva.id = rand() % 9000 + 1000; 
 		strcpy(nueva.cedulaPaciente, cedula);
