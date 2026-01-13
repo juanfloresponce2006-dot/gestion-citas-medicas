@@ -17,9 +17,9 @@ static const char* nombreArchivoMedicos = "data/medicos.txt";
 
 // --- Funciones Auxiliares Privadas ---
 static int parsearLineaCita(const char *linea, Cita *c) {
-	return sscanf(linea, "%d|%14[^|]|%14[^|]|%d|%d|%d|%5[^|]|%d",
+	return sscanf(linea, "%d|%14[^|]|%14[^|]|%d|%d|%d|%5[^|]|%d|%511[^\n]",
 				  &c->idCita, c->cedulaPaciente, c->codigoMedico, &c->fecha.dia,
-				  &c->fecha.mes, &c->fecha.anio, c->fecha.hora, &c->estado) == 8;
+				  &c->fecha.mes, &c->fecha.anio, c->fecha.hora, &c->estado, c-> observaciones) == 9;
 }
 
 static int parsearLineaMedicoLocal(const char *linea, Medico *m) {
@@ -304,16 +304,19 @@ void registrarCita(void) {
 		return;
 	}
 	
-	// 6. GUARDAR
+	// 6. OBSERVACIONES (vacío por defecto)
+	strcpy(c.observaciones, "SIN OBSERVACIONES");	
+	
+	// 7. GUARDAR
 	c.idCita = obtenerSiguienteIDCita();
 	FILE *archivo = fopen(nombreArchivoCitas, "a");
 	if (!archivo) archivo = fopen(nombreArchivoCitas, "w");
 	
 	if (archivo) {
-		fprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d\n",
+		fprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",
 				c.idCita, c.cedulaPaciente, c.codigoMedico,
 				c.fecha.dia, c.fecha.mes, c.fecha.anio,
-				c.fecha.hora, c.estado);
+				c.fecha.hora, c.estado, c.observaciones);
 		fclose(archivo);
 		printf("\n\t[OK] Cita #%d registrada exitosamente.\n", c.idCita);
 	} else {
@@ -360,46 +363,116 @@ static void listarCitas(void) {
 static void cambiarEstadoCita(void) {
 	char buffer[50];
 	int idBuscado;
-	do {
-		printf("Ingrese ID de la cita (0 para Volver): ");
-		if (fgets(buffer, sizeof(buffer), stdin) == NULL) continue;
-		buffer[strcspn(buffer, "\n")] = '\0'; 
-		if (numVerify(buffer) == 1) {
-			idBuscado = (int)strtol(buffer, NULL, 10);
-			if (idBuscado == 0) return; 
-			break;
-		}
-	} while (1);
 	
-	FILE *archivo = fopen(nombreArchivoCitas, "r+");
-	if (!archivo) { printf("Error DB.\n"); return; }
+	printf("Ingrese ID de la cita (0 para Volver): ");
+	if (!fgets(buffer, sizeof(buffer), stdin)) return;
+	buffer[strcspn(buffer, "\n")] = '\0';
+	
+	if (numVerify(buffer) != 1) return;
+	idBuscado = atoi(buffer);
+	if (idBuscado == 0) return;
+	
+	FILE *in = fopen(nombreArchivoCitas, "r");
+	FILE *out = fopen("data/citas.tmp", "w");
+	if (!in || !out) {
+		printf("Error DB.\n");
+		if (in) fclose(in);
+		if (out) fclose(out);
+		return;
+	}
+	
 	Cita c;
-	char linea[256];
-	long pos;
+	char linea[1024];
 	int encontrado = 0;
-	while (1) {
-		pos = ftell(archivo);
-		if (!fgets(linea, sizeof(linea), archivo)) break;
-		char lineaLimpia[256];
-		strcpy(lineaLimpia, linea);
-		lineaLimpia[strcspn(lineaLimpia, "\n")] = '\0';
-		if (parsearLineaCita(lineaLimpia, &c)) {
+	
+	while (fgets(linea, sizeof(linea), in)) {
+		linea[strcspn(linea, "\n")] = '\0';
+		
+		if (parsearLineaCita(linea, &c)) {
 			if (c.idCita == idBuscado) {
+				c.estado = !c.estado;
 				encontrado = 1;
-				c.estado = !c.estado; 
-				fseek(archivo, pos, SEEK_SET);
-				fprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d\n",
-						c.idCita, c.cedulaPaciente, c.codigoMedico,
-						c.fecha.dia, c.fecha.mes, c.fecha.anio,
-						c.fecha.hora, c.estado);
-				printf("\n\t[OK] Estado cambiado.\n");
-				break;
 			}
+			
+			fprintf(out, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",
+					c.idCita, c.cedulaPaciente, c.codigoMedico,
+					c.fecha.dia, c.fecha.mes, c.fecha.anio,
+					c.fecha.hora, c.estado, c.observaciones);
+		} else {
+			// Línea corrupta o inválida: se copia tal cual
+			fprintf(out, "%s\n", linea);
 		}
 	}
-	if (!encontrado) printf("\n\t[!] Cita no encontrada.\n");
-	fclose(archivo);
+	
+	fclose(in);
+	fclose(out);
+	
+	if (encontrado) {
+		remove(nombreArchivoCitas);
+		rename("data/citas.tmp", nombreArchivoCitas);
+		printf("\n\t[OK] Estado cambiado.\n");
+	} else {
+		remove("data/citas.tmp");
+		printf("\n\t[!] Cita no encontrada.\n");
+	}
 }
+
+
+static void editarObservacionesCita(const char *codigoMedico, const int idBuscado) {
+
+	FILE *in = fopen(nombreArchivoCitas, "r");
+	FILE *out = fopen("data/citas.tmp", "w");
+	if (!in || !out) {
+		printf("Error DB.\n");
+		if (in) fclose(in);
+		if (out) fclose(out);
+		return;
+	}
+	
+	Cita c;
+	char linea[1024];
+	int encontrado = 0;
+	
+	while (fgets(linea, sizeof(linea), in)) {
+		linea[strcspn(linea, "\n")] = '\0';
+		
+		if (parsearLineaCita(linea, &c) && c.idCita == idBuscado) {
+			if (strcmp(c.codigoMedico, codigoMedico) != 0) {
+				printf("\n\t[!] No puede editar citas de otro médico.\n");
+				fclose(in);
+				fclose(out);
+				remove("data/citas.tmp");
+				return;
+			}
+			
+			encontrado = 1;
+			printf("Ingrese observaciones (máx 512 caracteres):\n> ");
+			fgets(c.observaciones, sizeof(c.observaciones), stdin);
+			c.observaciones[strcspn(c.observaciones, "\n")] = '\0';
+			limpiarSeparadores(c.observaciones);
+			
+			fprintf(out, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",
+					c.idCita, c.cedulaPaciente, c.codigoMedico,
+					c.fecha.dia, c.fecha.mes, c.fecha.anio,
+					c.fecha.hora, c.estado, c.observaciones);
+		} else {
+			fprintf(out, "%s\n", linea);
+		}
+	}
+	
+	fclose(in);
+	fclose(out);
+	
+	if (encontrado) {
+		remove(nombreArchivoCitas);
+		rename("data/citas.tmp", nombreArchivoCitas);
+		printf("\n\t[OK] Observaciones actualizadas.\n");
+	} else {
+		remove("data/citas.tmp");
+		printf("\n\t[!] Cita no encontrada.\n");
+	}
+}
+
 
 void menuCitas(void) {
 	int opcion;
@@ -456,6 +529,10 @@ void listarCitasDeMedico(const char *codigoMedico) {
 				printf("%s%-4d %-11s %-12s %-8s %-10s\n",
 					   margen, c.idCita, c.cedulaPaciente,
 					   fechaStr, c.fecha.hora, (c.estado == 1) ? "Activa" : "Cancel.");
+				
+				printf("%s  Observaciones:\n", margen);
+				printf("%s  %s\n", margen, c.observaciones);
+				
 			}
 		}
 	}
@@ -463,6 +540,30 @@ void listarCitasDeMedico(const char *codigoMedico) {
 	printf("\n");
 	fclose(archivo);
 }
+
+void gestionarCitasMedico(const char *codigoMedico) {
+	char buffer[50];
+	int opcion;
+	
+	while (1) {
+		listarCitasDeMedico(codigoMedico);
+		
+		printf("Ingrese ID de la cita para editar observaciones (0 para volver): ");
+		if (!fgets(buffer, sizeof(buffer), stdin)) return;
+		buffer[strcspn(buffer, "\n")] = '\0';
+		
+		if (numVerify(buffer) != 1) continue;
+		opcion = atoi(buffer);
+		
+		if (opcion == 0) return;
+		
+		editarObservacionesCita(codigoMedico, opcion);
+		pausa();
+		limpiarPantalla();
+		dibujarEncabezado("MIS CITAS");
+	}
+}
+
 
 void listarCitasDePaciente(const char *cedulaPaciente) {
 	FILE *archivo = fopen("data/citas.txt", "r");
@@ -490,6 +591,10 @@ void listarCitasDePaciente(const char *cedulaPaciente) {
 				printf("%s%-4d %-10s %-12s %-8s %-10s\n",
 					   margen, c.idCita, c.codigoMedico,
 					   fechaStr, c.fecha.hora, (c.estado == 1) ? "Activa" : "Cancel.");
+				
+				printf("%s  Observaciones:\n", margen);
+				printf("%s  %s\n", margen, c.observaciones);
+				
 			}
 		}
 	}

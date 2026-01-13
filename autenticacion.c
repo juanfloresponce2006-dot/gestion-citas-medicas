@@ -279,10 +279,10 @@ static int iniciarSesion(char *usuarioLogueadoBuffer)
 			
 			if (strcmp(opcion, "s") == 0 || strcmp(opcion, "S") == 0) {
 				registrarUsuario();
-				return 0; // volver
 			}
 			
-			pausa();
+			return 0; // volver
+			
 		}else{
 			printf("\n   [!] Contraseña incorrecta.\n");
 			intentos--;

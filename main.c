@@ -128,7 +128,7 @@ void menuMedicoLogueado(char *codigoMedico)
 			break;
 		case 2: 
 			dibujarEncabezado("MIS CITAS");
-			listarCitasDeMedico(codigoMedico);
+			gestionarCitasMedico(codigoMedico);
 			pausa();
 			break;
 		//case 3: 

@@ -176,6 +176,13 @@ void cleanBuffer(){
 		return edad;
 	}
 	
+	void limpiarSeparadores(char *texto) {
+		for (int i = 0; texto[i]; i++) {
+			if (texto[i] == '|')
+				texto[i] = '/';   // o espacio, o '-'
+		}
+	}
+	
 	// --- Funciones de UI ---
 	
 	void limpiarPantalla() {

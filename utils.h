@@ -15,6 +15,7 @@ int validarFechaNacimiento(const char *fecha); // Rango 1900-2025
 int validarFechaCita(const char *fecha);       // Rango 2024-2100
 int validacionEdad(char *buffer);
 int calcularEdad (const char *fechaNac);
+void limpiarSeparadores(char *texto);
 
 
 // Prototipos de UI
