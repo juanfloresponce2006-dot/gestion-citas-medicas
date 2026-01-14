@@ -1,0 +1,369 @@
+[33mcommit df439a4fdd4c57936139ab82b124197ebdafab15[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mrama-andres[m[33m, [m[1;31morigin/rama-andres[m[33m)[m
+Author: delatorreandres <delatorre.andresdb@gmail.com>
+Date:   Tue Jan 13 12:53:49 2026 -0500
+
+    Observaciones de citas agregadas, funciÃ³n cambiarEstadoCita modificada
+
+[1mdiff --git a/Debug/MyProject.exe b/Debug/MyProject.exe[m
+[1mindex d167498..b6c9d30 100644[m
+Binary files a/Debug/MyProject.exe and b/Debug/MyProject.exe differ
+[1mdiff --git a/Debug/autenticacion.o b/Debug/autenticacion.o[m
+[1mindex 5dc3d83..79c2865 100644[m
+Binary files a/Debug/autenticacion.o and b/Debug/autenticacion.o differ
+[1mdiff --git a/Debug/citas.o b/Debug/citas.o[m
+[1mindex 7adbb32..0ec59df 100644[m
+Binary files a/Debug/citas.o and b/Debug/citas.o differ
+[1mdiff --git a/Debug/main.o b/Debug/main.o[m
+[1mindex 188ea75..63338c3 100644[m
+Binary files a/Debug/main.o and b/Debug/main.o differ
+[1mdiff --git a/Debug/utils.o b/Debug/utils.o[m
+[1mindex 8d5b3e0..fea06fe 100644[m
+Binary files a/Debug/utils.o and b/Debug/utils.o differ
+[1mdiff --git a/autenticacion.c b/autenticacion.c[m
+[1mindex 56937be..9c9194e 100644[m
+[1m--- a/autenticacion.c[m
+[1m+++ b/autenticacion.c[m
+[36m@@ -279,10 +279,10 @@[m [mstatic int iniciarSesion(char *usuarioLogueadoBuffer)[m
+ 			[m
+ 			if (strcmp(opcion, "s") == 0 || strcmp(opcion, "S") == 0) {[m
+ 				registrarUsuario();[m
+[31m-				return 0; // volver[m
+ 			}[m
+ 			[m
+[31m-			pausa();[m
+[32m+[m			[32mreturn 0; // volver[m[41m[m
+[32m+[m[41m			[m
+ 		}else{[m
+ 			printf("\n   [!] Contraseña incorrecta.\n");[m
+ 			intentos--;[m
+[1mdiff --git a/citas.c b/citas.c[m
+[1mindex 0ec69c1..407f04b 100644[m
+[1m--- a/citas.c[m
+[1m+++ b/citas.c[m
+[36m@@ -17,9 +17,9 @@[m [mstatic const char* nombreArchivoMedicos = "data/medicos.txt";[m
+ [m
+ // --- Funciones Auxiliares Privadas ---[m
+ static int parsearLineaCita(const char *linea, Cita *c) {[m
+[31m-	return sscanf(linea, "%d|%14[^|]|%14[^|]|%d|%d|%d|%5[^|]|%d",[m
+[32m+[m	[32mreturn sscanf(linea, "%d|%14[^|]|%14[^|]|%d|%d|%d|%5[^|]|%d|%511[^\n]",[m[41m[m
+ 				  &c->idCita, c->cedulaPaciente, c->codigoMedico, &c->fecha.dia,[m
+[31m-				  &c->fecha.mes, &c->fecha.anio, c->fecha.hora, &c->estado) == 8;[m
+[32m+[m				[32m  &c->fecha.mes, &c->fecha.anio, c->fecha.hora, &c->estado, c-> observaciones) == 9;[m[41m[m
+ }[m
+ [m
+ static int parsearLineaMedicoLocal(const char *linea, Medico *m) {[m
+[36m@@ -304,16 +304,19 @@[m [mvoid registrarCita(void) {[m
+ 		return;[m
+ 	}[m
+ 	[m
+[31m-	// 6. GUARDAR[m
+[32m+[m	[32m// 6. OBSERVACIONES (vacío por defecto)[m[41m[m
+[32m+[m	[32mstrcpy(c.observaciones, "SIN OBSERVACIONES");[m[41m	[m
+[32m+[m[41m	[m
+[32m+[m	[32m// 7. GUARDAR[m[41m[m
+ 	c.idCita = obtenerSiguienteIDCita();[m
+ 	FILE *archivo = fopen(nombreArchivoCitas, "a");[m
+ 	if (!archivo) archivo = fopen(nombreArchivoCitas, "w");[m
+ 	[m
+ 	if (archivo) {[m
+[31m-		fprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d\n",[m
+[32m+[m		[32mfprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",[m[41m[m
+ 				c.idCita, c.cedulaPaciente, c.codigoMedico,[m
+ 				c.fecha.dia, c.fecha.mes, c.fecha.anio,[m
+[31m-				c.fecha.hora, c.estado);[m
+[32m+[m				[32mc.fecha.hora, c.estado, c.observaciones);[m[41m[m
+ 		fclose(archivo);[m
+ 		printf("\n\t[OK] Cita #%d registrada exitosamente.\n", c.idCita);[m
+ 	} else {[m
+[36m@@ -360,47 +363,117 @@[m [mstatic void listarCitas(void) {[m
+ static void cambiarEstadoCita(void) {[m
+ 	char buffer[50];[m
+ 	int idBuscado;[m
+[31m-	do {[m
+[31m-		printf("Ingrese ID de la cita (0 para Volver): ");[m
+[31m-		if (fgets(buffer, sizeof(buffer), stdin) == NULL) continue;[m
+[31m-		buffer[strcspn(buffer, "\n")] = '\0'; [m
+[31m-		if (numVerify(buffer) == 1) {[m
+[31m-			idBuscado = (int)strtol(buffer, NULL, 10);[m
+[31m-			if (idBuscado == 0) return; [m
+[31m-			break;[m
+[31m-		}[m
+[31m-	} while (1);[m
+ 	[m
+[31m-	FILE *archivo = fopen(nombreArchivoCitas, "r+");[m
+[31m-	if (!archivo) { printf("Error DB.\n"); return; }[m
+[32m+[m	[32mprintf("Ingrese ID de la cita (0 para Volver): ");[m[41m[m
+[32m+[m	[32mif (!fgets(buffer, sizeof(buffer), stdin)) return;[m[41m[m
+[32m+[m	[32mbuffer[strcspn(buffer, "\n")] = '\0';[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mif (numVerify(buffer) != 1) return;[m[41m[m
+[32m+[m	[32midBuscado = atoi(buffer);[m[41m[m
+[32m+[m	[32mif (idBuscado == 0) return;[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mFILE *in = fopen(nombreArchivoCitas, "r");[m[41m[m
+[32m+[m	[32mFILE *out = fopen("data/citas.tmp", "w");[m[41m[m
+[32m+[m	[32mif (!in || !out) {[m[41m[m
+[32m+[m		[32mprintf("Error DB.\n");[m[41m[m
+[32m+[m		[32mif (in) fclose(in);[m[41m[m
+[32m+[m		[32mif (out) fclose(out);[m[41m[m
+[32m+[m		[32mreturn;[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[41m	[m
+ 	Cita c;[m
+[31m-	char linea[256];[m
+[31m-	long pos;[m
+[32m+[m	[32mchar linea[1024];[m[41m[m
+ 	int encontrado = 0;[m
+[31m-	while (1) {[m
+[31m-		pos = ftell(archivo);[m
+[31m-		if (!fgets(linea, sizeof(linea), archivo)) break;[m
+[31m-		char lineaLimpia[256];[m
+[31m-		strcpy(lineaLimpia, linea);[m
+[31m-		lineaLimpia[strcspn(lineaLimpia, "\n")] = '\0';[m
+[31m-		if (parsearLineaCita(lineaLimpia, &c)) {[m
+[32m+[m[41m	[m
+[32m+[m	[32mwhile (fgets(linea, sizeof(linea), in)) {[m[41m[m
+[32m+[m		[32mlinea[strcspn(linea, "\n")] = '\0';[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32mif (parsearLineaCita(linea, &c)) {[m[41m[m
+ 			if (c.idCita == idBuscado) {[m
+[32m+[m				[32mc.estado = !c.estado;[m[41m[m
+ 				encontrado = 1;[m
+[31m-				c.estado = !c.estado; [m
+[31m-				fseek(archivo, pos, SEEK_SET);[m
+[31m-				fprintf(archivo, "%d|%s|%s|%d|%d|%d|%s|%d\n",[m
+[31m-						c.idCita, c.cedulaPaciente, c.codigoMedico,[m
+[31m-						c.fecha.dia, c.fecha.mes, c.fecha.anio,[m
+[31m-						c.fecha.hora, c.estado);[m
+[31m-				printf("\n\t[OK] Estado cambiado.\n");[m
+[31m-				break;[m
+ 			}[m
+[32m+[m[41m			[m
+[32m+[m			[32mfprintf(out, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",[m[41m[m
+[32m+[m					[32mc.idCita, c.cedulaPaciente, c.codigoMedico,[m[41m[m
+[32m+[m					[32mc.fecha.dia, c.fecha.mes, c.fecha.anio,[m[41m[m
+[32m+[m					[32mc.fecha.hora, c.estado, c.observaciones);[m[41m[m
+[32m+[m		[32m} else {[m[41m[m
+[32m+[m			[32m// Línea corrupta o inválida: se copia tal cual[m[41m[m
+[32m+[m			[32mfprintf(out, "%s\n", linea);[m[41m[m
+ 		}[m
+ 	}[m
+[31m-	if (!encontrado) printf("\n\t[!] Cita no encontrada.\n");[m
+[31m-	fclose(archivo);[m
+[32m+[m[41m	[m
+[32m+[m	[32mfclose(in);[m[41m[m
+[32m+[m	[32mfclose(out);[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mif (encontrado) {[m[41m[m
+[32m+[m		[32mremove(nombreArchivoCitas);[m[41m[m
+[32m+[m		[32mrename("data/citas.tmp", nombreArchivoCitas);[m[41m[m
+[32m+[m		[32mprintf("\n\t[OK] Estado cambiado.\n");[m[41m[m
+[32m+[m	[32m} else {[m[41m[m
+[32m+[m		[32mremove("data/citas.tmp");[m[41m[m
+[32m+[m		[32mprintf("\n\t[!] Cita no encontrada.\n");[m[41m[m
+[32m+[m	[32m}[m[41m[m
+ }[m
+ [m
+[32m+[m[41m[m
+[32m+[m[32mstatic void editarObservacionesCita(const char *codigoMedico, const int idBuscado) {[m[41m[m
+[32m+[m[41m[m
+[32m+[m	[32mFILE *in = fopen(nombreArchivoCitas, "r");[m[41m[m
+[32m+[m	[32mFILE *out = fopen("data/citas.tmp", "w");[m[41m[m
+[32m+[m	[32mif (!in || !out) {[m[41m[m
+[32m+[m		[32mprintf("Error DB.\n");[m[41m[m
+[32m+[m		[32mif (in) fclose(in);[m[41m[m
+[32m+[m		[32mif (out) fclose(out);[m[41m[m
+[32m+[m		[32mreturn;[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mCita c;[m[41m[m
+[32m+[m	[32mchar linea[1024];[m[41m[m
+[32m+[m	[32mint encontrado = 0;[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mwhile (fgets(linea, sizeof(linea), in)) {[m[41m[m
+[32m+[m		[32mlinea[strcspn(linea, "\n")] = '\0';[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32mif (parsearLineaCita(linea, &c) && c.idCita == idBuscado) {[m[41m[m
+[32m+[m			[32mif (strcmp(c.codigoMedico, codigoMedico) != 0) {[m[41m[m
+[32m+[m				[32mprintf("\n\t[!] No puede editar citas de otro médico.\n");[m[41m[m
+[32m+[m				[32mfclose(in);[m[41m[m
+[32m+[m				[32mfclose(out);[m[41m[m
+[32m+[m				[32mremove("data/citas.tmp");[m[41m[m
+[32m+[m				[32mreturn;[m[41m[m
+[32m+[m			[32m}[m[41m[m
+[32m+[m[41m			[m
+[32m+[m			[32mencontrado = 1;[m[41m[m
+[32m+[m			[32mprintf("Ingrese observaciones (máx 512 caracteres):\n> ");[m[41m[m
+[32m+[m			[32mfgets(c.observaciones, sizeof(c.observaciones), stdin);[m[41m[m
+[32m+[m			[32mc.observaciones[strcspn(c.observaciones, "\n")] = '\0';[m[41m[m
+[32m+[m			[32mlimpiarSeparadores(c.observaciones);[m[41m[m
+[32m+[m[41m			[m
+[32m+[m			[32mfprintf(out, "%d|%s|%s|%d|%d|%d|%s|%d|%s\n",[m[41m[m
+[32m+[m					[32mc.idCita, c.cedulaPaciente, c.codigoMedico,[m[41m[m
+[32m+[m					[32mc.fecha.dia, c.fecha.mes, c.fecha.anio,[m[41m[m
+[32m+[m					[32mc.fecha.hora, c.estado, c.observaciones);[m[41m[m
+[32m+[m		[32m} else {[m[41m[m
+[32m+[m			[32mfprintf(out, "%s\n", linea);[m[41m[m
+[32m+[m		[32m}[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mfclose(in);[m[41m[m
+[32m+[m	[32mfclose(out);[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mif (encontrado) {[m[41m[m
+[32m+[m		[32mremove(nombreArchivoCitas);[m[41m[m
+[32m+[m		[32mrename("data/citas.tmp", nombreArchivoCitas);[m[41m[m
+[32m+[m		[32mprintf("\n\t[OK] Observaciones actualizadas.\n");[m[41m[m
+[32m+[m	[32m} else {[m[41m[m
+[32m+[m		[32mremove("data/citas.tmp");[m[41m[m
+[32m+[m		[32mprintf("\n\t[!] Cita no encontrada.\n");[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[32m}[m[41m[m
+[32m+[m[41m[m
+[32m+[m[41m[m
+ void menuCitas(void) {[m
+ 	int opcion;[m
+ 	char buffer[50];[m
+[36m@@ -456,6 +529,10 @@[m [mvoid listarCitasDeMedico(const char *codigoMedico) {[m
+ 				printf("%s%-4d %-11s %-12s %-8s %-10s\n",[m
+ 					   margen, c.idCita, c.cedulaPaciente,[m
+ 					   fechaStr, c.fecha.hora, (c.estado == 1) ? "Activa" : "Cancel.");[m
+[32m+[m[41m				[m
+[32m+[m				[32mprintf("%s  Observaciones:\n", margen);[m[41m[m
+[32m+[m				[32mprintf("%s  %s\n", margen, c.observaciones);[m[41m[m
+[32m+[m[41m				[m
+ 			}[m
+ 		}[m
+ 	}[m
+[36m@@ -464,6 +541,30 @@[m [mvoid listarCitasDeMedico(const char *codigoMedico) {[m
+ 	fclose(archivo);[m
+ }[m
+ [m
+[32m+[m[32mvoid gestionarCitasMedico(const char *codigoMedico) {[m[41m[m
+[32m+[m	[32mchar buffer[50];[m[41m[m
+[32m+[m	[32mint opcion;[m[41m[m
+[32m+[m[41m	[m
+[32m+[m	[32mwhile (1) {[m[41m[m
+[32m+[m		[32mlistarCitasDeMedico(codigoMedico);[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32mprintf("Ingrese ID de la cita para editar observaciones (0 para volver): ");[m[41m[m
+[32m+[m		[32mif (!fgets(buffer, sizeof(buffer), stdin)) return;[m[41m[m
+[32m+[m		[32mbuffer[strcspn(buffer, "\n")] = '\0';[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32mif (numVerify(buffer) != 1) continue;[m[41m[m
+[32m+[m		[32mopcion = atoi(buffer);[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32mif (opcion == 0) return;[m[41m[m
+[32m+[m[41m		[m
+[32m+[m		[32meditarObservacionesCita(codigoMedico, opcion);[m[41m[m
+[32m+[m		[32mpausa();[m[41m[m
+[32m+[m		[32mlimpiarPantalla();[m[41m[m
+[32m+[m		[32mdibujarEncabezado("MIS CITAS");[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[32m}[m[41m[m
+[32m+[m[41m[m
+[32m+[m[41m[m
+ void listarCitasDePaciente(const char *cedulaPaciente) {[m
+ 	FILE *archivo = fopen("data/citas.txt", "r");[m
+ 	if (!archivo) { printf("\n\t[!] No hay citas registradas.\n"); return; }[m
+[36m@@ -490,6 +591,10 @@[m [mvoid listarCitasDePaciente(const char *cedulaPaciente) {[m
+ 				printf("%s%-4d %-10s %-12s %-8s %-10s\n",[m
+ 					   margen, c.idCita, c.codigoMedico,[m
+ 					   fechaStr, c.fecha.hora, (c.estado == 1) ? "Activa" : "Cancel.");[m
+[32m+[m[41m				[m
+[32m+[m				[32mprintf("%s  Observaciones:\n", margen);[m[41m[m
+[32m+[m				[32mprintf("%s  %s\n", margen, c.observaciones);[m[41m[m
+[32m+[m[41m				[m
+ 			}[m
+ 		}[m
+ 	}[m
+[1mdiff --git a/citas.h b/citas.h[m
+[1mindex 62ca147..e108243 100644[m
+[1m--- a/citas.h[m
+[1m+++ b/citas.h[m
+[36m@@ -13,6 +13,7 @@[m [mtypedef struct {[m
+ 	char codigoMedico[10];[m
+ 	FechaHora fecha;[m
+ 	int estado;          // 1 = activa, 0 = cancelada[m
+[32m+[m	[32mchar observaciones[512];[m[41m[m
+ } Cita;[m
+ [m
+ void menuCitas(void);[m
+[36m@@ -20,5 +21,6 @@[m [mvoid listarCitasDeMedico(const char *codigoMedico);[m
+ void registrarCita(void); [m
+ void listarCitasDePaciente(const char *cedulaPaciente);[m
+ void listarCitasDeMedico(const char *codigoMedico);[m
+[32m+[m[32mvoid gestionarCitasMedico(const char *codigoMedico);[m[41m[m
+ [m
+ #endif[m
+[1mdiff --git a/data/citas.txt b/data/citas.txt[m
+[1mnew file mode 100644[m
+[1mindex 0000000..18920a9[m
+[1m--- /dev/null[m
+[1m+++ b/data/citas.txt[m
+[36m@@ -0,0 +1 @@[m
+[32m+[m[32m1|1234567890|1234569870|14|1|2026|10:30|1|SIN OBSERVACIONES[m
+[1mdiff --git a/data/medicos.txt b/data/medicos.txt[m
+[1mnew file mode 100644[m
+[1mindex 0000000..020aef5[m
+[1m--- /dev/null[m
+[1m+++ b/data/medicos.txt[m
+[36m@@ -0,0 +1 @@[m
+[32m+[m[32m1234569870|pepe mena|25|12-04-2000|Medicina Familiar y General|09:00-17:00|1[m
+[1mdiff --git a/data/pacientes.txt b/data/pacientes.txt[m
+[1mindex 973f01a..fdef0ed 100644[m
+[1m--- a/data/pacientes.txt[m
+[1m+++ b/data/pacientes.txt[m
+[36m@@ -1 +1,2 @@[m
+ 1234567890|andreés jeremy de la torre|19|04-10-2006|0987654321|a@gmail.com|1[m
+[32m+[m[32m1231231230|luis yepez|18|13-01-2007|0987654654|l@gmail.com|1[m
+[1mdiff --git a/data/usuarios.txt b/data/usuarios.txt[m
+[1mindex 4609dcd..cac3812 100644[m
+[1m--- a/data/usuarios.txt[m
+[1m+++ b/data/usuarios.txt[m
+[36m@@ -1 +1,2 @@[m
+ 1234567890|123|2[m
+[32m+[m[32m1234569870|123|1[m
+[1mdiff --git a/main.c b/main.c[m
+[1mindex d8eae74..dc20961 100644[m
+[1m--- a/main.c[m
+[1m+++ b/main.c[m
+[36m@@ -128,7 +128,7 @@[m [mvoid menuMedicoLogueado(char *codigoMedico)[m
+ 			break;[m
+ 		case 2: [m
+ 			dibujarEncabezado("MIS CITAS");[m
+[31m-			listarCitasDeMedico(codigoMedico);[m
+[32m+[m			[32mgestionarCitasMedico(codigoMedico);[m
+ 			pausa();[m
+ 			break;[m
+ 		//case 3: [m
+[1mdiff --git a/utils.c b/utils.c[m
+[1mindex d274d4b..a03a4a9 100644[m
+[1m--- a/utils.c[m
+[1m+++ b/utils.c[m
+[36m@@ -176,6 +176,13 @@[m [mvoid cleanBuffer(){[m
+ 		return edad;[m
+ 	}[m
+ 	[m
+[32m+[m	[32mvoid limpiarSeparadores(char *texto) {[m[41m[m
+[32m+[m		[32mfor (int i = 0; texto[i]; i++) {[m[41m[m
+[32m+[m			[32mif (texto[i] == '|')[m[41m[m
+[32m+[m				[32mtexto[i] = '/';   // o espacio, o '-'[m[41m[m
+[32m+[m		[32m}[m[41m[m
+[32m+[m	[32m}[m[41m[m
+[32m+[m[41m	[m
+ 	// --- Funciones de UI ---[m
+ 	[m
+ 	void limpiarPantalla() {[m
+[1mdiff --git a/utils.h b/utils.h[m
+[1mindex d3c8438..3f5fbb6 100644[m
+[1m--- a/utils.h[m
+[1m+++ b/utils.h[m
+[36m@@ -15,6 +15,7 @@[m [mint validarFechaNacimiento(const char *fecha); // Rango 1900-2025[m
+ int validarFechaCita(const char *fecha);       // Rango 2024-2100[m
+ int validacionEdad(char *buffer);[m
+ int calcularEdad (const char *fechaNac);[m
+[32m+[m[32mvoid limpiarSeparadores(char *texto);[m[41m[m
+ [m
+ [m
+ // Prototipos de UI[m
