@@ -30,6 +30,8 @@ El programa está compuesto por los siguientes módulos:
 
 \* `fecha.c/h` y `historial.c/h`: Utilidades de tiempo y bitácora.
 
+\* `util.c/h`: Funciones que se utilizaron recurrentemente
+
 
 
 \## 🚀 Compilación y Ejecución
