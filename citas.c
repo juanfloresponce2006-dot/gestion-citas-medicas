@@ -264,7 +264,7 @@ void registrarCita(void) {
 		if (strcmp(buffer, "0") == 0) return;
 		
 		if (!validarFechaCita(buffer)) {
-			printf(" -> Error: Formato incorrecto (DD-MM-YYYY) o fecha pasada/muy futura.\n");
+			printf(" -> Error: Formato incorrecto (DD-MM-YYYY), Fecha pasada o Fuera de rango.\n");
 			continue;
 		}
 		
