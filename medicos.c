@@ -45,6 +45,10 @@ void registrarMedico(void) {
 	Medico m;
 	char buffer[100];
 	
+	printf("[!] ADVERTENCIA: Crear un médico por este medio evitará que el mismo pueda usar el sistema\n");
+	pausa();
+	limpiarPantalla();
+	
 	// Lista de especialidades definida
 	const char *listaEspecialidades[] = {
 		"Medicina Familiar y General", "Pediatria", "Medicina Interna",
