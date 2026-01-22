@@ -1,2 +1,0 @@
-1234569870|pepe mena|25|12-04-2000|Medicina Familiar y General|09:00-17:00|1
-1111111111|Paciente con Tílde|25|20-10-2000|Medicina Familiar y General|08:00-16:00|1

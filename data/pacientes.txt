@@ -1,4 +1,0 @@
-1234567890|andreés jeremy de la torre|19|04-10-2006|0987654321|a@gmail.com|1
-1231231230|luis yepez|18|13-01-2007|0987654654|l@gmail.com|1
-2222222222|Paciente con Ñ|25|10-10-2000|0000000000|@gmail.com|1
-3333333333|Paciente con Tílde|50|10-10-2000|0000000000|@gmail.com|1
