@@ -52,6 +52,10 @@ void registrarPaciente(void) {
 	Paciente p;
 	char buffer[100];
 	
+	printf("[!] ADVERTENCIA: Crear un paciente por este medio evitará que el mismo pueda usar el sistema\n");
+	pausa();
+	limpiarPantalla();
+	
 	p.activo = 1; // Por defecto activo
 	
 	dibujarEncabezado("REGISTRO DE PACIENTE");

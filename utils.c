@@ -131,6 +131,23 @@ void cleanBuffer(){
 	}
 	
 	// 2. VALIDAR CITA (Rango : 2024 - 2100)
+	//auxiliares fecha a dias
+		static int bisiesto(int anio){
+			return (anio%4 == 0 && anio%100 != 0) || (anio%400 == 0);
+		}
+		static long dateToDays(int dia, int mes, int anio){
+			long dias = anio * 365 + dia;
+			int diaMes[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
+			for(int i = 1 ; i < mes ; i++){
+				dias += diaMes[i];
+			}
+			dias += ((anio-1)/4 - (anio-1)/100 + (anio-1)/400);
+			if(bisiesto(anio) && mes > 2){
+				dias++;
+			}
+			return dias;
+		}
+			
 	int validarFechaCita(const char *fecha) {
 		size_t len = strlen(fecha);
 		
@@ -146,8 +163,13 @@ void cleanBuffer(){
 		int dia, mes, anio;
 		sscanf(fecha, "%d-%d-%d", &dia, &mes, &anio);
 		
+		int diaActual, mesActual, anioActual;
+		sscanf(fechaActual, "%d-%d-%d", &diaActual, &mesActual, &anioActual);
+		
 		// Rango de años para citas futuras
-		if (anio < 2024 || anio > 2100) return 0;
+		long totalDias = dateToDays(dia,mes,anio);
+		long totalDiasActual = dateToDays(diaActual,mesActual,anioActual);
+		if (totalDias < totalDiasActual || totalDias > (totalDiasActual+90)) return 0;
 		
 		return validarDiasMes(dia, mes, anio);
 	}
